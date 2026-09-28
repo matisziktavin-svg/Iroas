@@ -1,0 +1,19 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+      - name: setup.ps1 parses and is ASCII
+        shell: pwsh
+        run: |
+          $e = $null; $t = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile("$PWD\setup.ps1", [ref]$t, [ref]$e)
+          if ($e.Count) { $e; exit 1 }
+          if (Select-String -Path setup.ps1 -Pattern '[^\x00-\x7F]') { "non-ASCII in setup.ps1"; exit 1 }

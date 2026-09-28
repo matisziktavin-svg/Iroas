@@ -1,0 +1,15 @@
+# Personal data & secrets — never commit
+.env
+settings.json
+settings.broken.json
+state.json
+data/
+logs/
+tmp/
+*.tmp
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
