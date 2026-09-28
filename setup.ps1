@@ -24,6 +24,12 @@ function Refresh-Path {
     $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
                 [Environment]::GetEnvironmentVariable("Path", "User")
 }
+# Read-Host that never returns $null (it does if input is closed).
+function Ask($prompt) {
+    $v = Read-Host $prompt
+    if ($null -eq $v) { Fail "No input received. Run setup.bat by double-clicking it." }
+    return $v.Trim()
+}
 function Have-Winget { return [bool](Get-Command winget -ErrorAction SilentlyContinue) }
 
 function Winget-Install($id, $name) {
@@ -158,10 +164,10 @@ if ($vals["CLAUDE_CODE_OAUTH_TOKEN"] -and -not $RefreshClaude) {
     Say "A browser window will open. Sign in to Claude with the account that has your"
     Say "subscription and click Authorize. Then come back to this window: it will show a"
     Say "long token starting with  sk-ant-oat  - copy it (select it, then right-click or Ctrl+C)."
-    Read-Host "Press Enter to open the browser"
+    [void](Ask "Press Enter to open the browser")
     & $ClaudeExe setup-token
     while ($true) {
-        $tok = (Read-Host "Paste the token here and press Enter").Trim()
+        $tok = Ask "Paste the token here and press Enter"
         if ($tok -like "sk-ant-oat*") { $vals["CLAUDE_CODE_OAUTH_TOKEN"] = $tok; break }
         if ($tok -like "sk-ant-api*") {
             Say "That's an API key, not a subscription token. Iroas only uses your subscription - paste the sk-ant-oat token." Red
@@ -184,10 +190,10 @@ if ($botName) {
     Say "  1. Search for  @BotFather  (blue check mark) and open it, tap Start."
     Say "  2. Send  /newbot"
     Say "  3. Give it a name (e.g. Iroas) and then a username ending in 'bot' (e.g. dave_iroas_bot)."
-    Say "  4. BotFather replies with a token like  123456789:AAH...  - send it to yourself"
-    Say "     (e.g. email it) so you can copy it here, or type it carefully."
+    Say "  4. BotFather replies with a token like  123456789:AAH...  To copy it on this PC,"
+    Say "     open https://web.telegram.org here, log in, and open the BotFather chat."
     while (-not $botName) {
-        $tok = (Read-Host "Paste the bot token here").Trim()
+        $tok = Ask "Paste the bot token here"
         $botName = Test-Telegram $tok
         if ($botName) { $vals["TELEGRAM_BOT_TOKEN"] = $tok } else { Say "Telegram didn't accept that token. Check it and try again." Red }
     }
@@ -207,7 +213,7 @@ if ($hevyName) {
     Say "  2. Click to generate an API key and copy it."
     Start-Process "https://hevy.com/settings?developer"
     while (-not $hevyName) {
-        $key = (Read-Host "Paste the Hevy API key here").Trim()
+        $key = Ask "Paste the Hevy API key here"
         $hevyName = Test-Hevy $key
         if ($hevyName) { $vals["HEVY_API_KEY"] = $key } else { Say "Hevy didn't accept that key (is Hevy Pro active?). Try again." Red }
     }
